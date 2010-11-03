@@ -1,12 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     >
-<TextView  
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    android:text="@string/hello"
-    />
-</LinearLayout>
+
+	<TextView 
+		android:id="@+id/welcome_text"
+        android:text = "@string/welcome"           
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        />
+	<TextView 
+		android:id="@+id/username"
+		android:layout_width="fill_parent" 
+    	android:layout_height="wrap_content" 
+    	android:text="@string/username"
+    	android:layout_below="@id/welcome_text"
+    	/>
+	<EditText
+	    android:id="@+id/username_box"
+	    android:layout_width="fill_parent" 
+	    android:layout_height="wrap_content"
+	    android:background="@android:drawable/editbox_background"
+	    android:layout_below="@id/username"
+    	/>
+	<TextView
+		android:id="@+id/passwd"
+    	android:layout_width="fill_parent" 
+    	android:layout_height="wrap_content" 
+    	android:text="@string/passwd"
+    	android:layout_below="@id/username_box"
+    	/>
+	<EditText
+		android:id="@+id/passwd_box"
+		android:password="true"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:background="@android:drawable/editbox_background"
+	    android:layout_below="@id/passwd"
+	    />
+    <Button
+        android:id="@+id/ok"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/passwd_box"
+        android:layout_alignParentRight="true"
+        android:layout_marginLeft="10dip"
+        android:text="OK"
+        />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toLeftOf="@id/ok"
+        android:layout_alignTop="@id/ok"
+        android:text="Cancel"
+        />
+
+</RelativeLayout>

@@ -1,16 +1,16 @@
 package eu.spyropoulos.android.oldweather;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.preference.PreferenceManager;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.widget.Toast;
 
-
-
 public class OldWeatherApp extends Activity {
-    private static final String TAG = "OldWeather";
+    public static final String TAG = "OldWeather";
 
+    private Connection conn;
     private DbAdapter mDb;
 
     /** Called when the activity is first created. */
@@ -18,6 +18,8 @@ public class OldWeatherApp extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+
+        conn = new Connection();
 
         mDb = new DbAdapter(this);
         mDb.open();
@@ -28,9 +30,10 @@ public class OldWeatherApp extends Activity {
             resetSharedPreferences(prefs);
         }
 
+        Toast netStatusMessage = null;
+        /*
         mDb.createUser("iniju", null);
 
-        Toast netStatusMessage = null;
         Cursor cur = mDb.fetchUser("iniju");
         String pwd = cur.getString(1);
         if (pwd == null) {
@@ -39,15 +42,11 @@ public class OldWeatherApp extends Activity {
             netStatusMessage = Toast.makeText(OldWeatherApp.this, "String was not null, it was " + pwd, Toast.LENGTH_SHORT);
         }
         netStatusMessage.show();
+*/
 
-
-        netStatusMessage = null;
         if (Connection.isOnline(getBaseContext())) {
-            netStatusMessage = Toast.makeText(OldWeatherApp.this, "Network is on", Toast.LENGTH_SHORT);
-        } else {
-            netStatusMessage = Toast.makeText(OldWeatherApp.this, "Network is off", Toast.LENGTH_SHORT);
+            conn.login("iniju", "aaa", getBaseContext());
         }
-        netStatusMessage.show();
     }
 
     /**

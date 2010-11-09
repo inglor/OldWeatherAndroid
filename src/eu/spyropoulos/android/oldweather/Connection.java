@@ -10,16 +10,26 @@ import android.widget.Toast;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.CookieStore;
+import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
+import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.protocol.ExecutionContext;
+import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 
 public class Connection {
@@ -109,13 +119,40 @@ public class Connection {
         }
         private boolean doInBackgroundLogin(String login, String password) {
             try {
+                // First get the login webpage, so we can extract the hidden input lt code and the login URL (the original is redirected)
                 HttpGet httpGet = new HttpGet(LOGIN_URL);
-                HttpResponse response = mHttpClient.execute(httpGet);
+                HttpContext context = new BasicHttpContext();
+                HttpResponse response = mHttpClient.execute(httpGet, context);
                 HttpEntity resp_entity = response.getEntity();
 
                 if (resp_entity != null) {
-                    String login_page = EntityUtils.toString(resp_entity);
-                    Log.i(TAG, login_page);
+                    String login_page_html = EntityUtils.toString(resp_entity);
+                    Log.i(TAG, login_page_html);
+                    // Locate and extract the contents of the form tag
+                    Pattern formPattern = Pattern.compile("<form action=\"([^\"])+\" method=\"post\" [^>]*id=\"login-form\">(.*?)</form>");
+                    Matcher m = formPattern.matcher(login_page_html);
+                    if (m.find() && m.groupCount() == 2) {
+                        String submit_suffix = m.group(1); // This is the suffix to the redirected URL where the form is submitted
+                        String form_contents = m.group(2); // This contains the form inputs and needs further parsing
+                        Log.i(TAG, form_contents);
+                    }
+                    // Find the redirected URL, as this is where the form is submitted (with the suffix added)
+                    HttpHost currentHost = (HttpHost) context.getAttribute(ExecutionContext.HTTP_TARGET_HOST);
+                    Log.i(TAG, "host: " + currentHost.toURI());
+                    HttpUriRequest currentReq = (HttpUriRequest) context.getAttribute(ExecutionContext.HTTP_REQUEST);
+                    Log.i(TAG, "uri: " + currentReq.getURI());
+
+                    // Examine header
+                    for (Header h : response.getAllHeaders()) {
+                        Log.i(TAG, "key: " + h.getName() + ", value: " + h.getValue());
+                    }
+
+                    // Examine cookies
+                    CookieStore cs = mHttpClient.getCookieStore();
+                    for (Cookie c : cs.getCookies()) {
+                        Log.i(TAG, "Cookie: path: " + c.getPath() + " name: " + c.getName() + " value: " + c.getValue());
+                    }
+
                 }
             } catch (ClientProtocolException e) {
                 Log.e(TAG, "login: ClientProtocolException: " + e.getMessage());

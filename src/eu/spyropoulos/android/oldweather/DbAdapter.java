@@ -25,7 +25,7 @@ public class DbAdapter {
         "CREATE TABLE ships (" +
         "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
         "name TEXT NOT NULL, " +
-        "transcriber INTEGER NOT NULL))";
+        "transcriber INTEGER NOT NULL)";
     private static final String SQL_DB_DROP_SHIPS = "DROP TABLE IF EXISTS ships";
 
     private DatabaseHelper mDbHelper;

@@ -10,6 +10,8 @@ import android.widget.Toast;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
@@ -18,12 +20,17 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CookieStore;
+import org.apache.http.client.HttpClient;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
@@ -108,10 +115,10 @@ public class Connection {
                     Toast msg = null;
                     if (success) {
                         Log.i(TAG, "login successful");
-                        msg = Toast.makeText(ctx, "YES!!!!!", Toast.LENGTH_SHORT);
+                        msg = Toast.makeText(ctx, "Login Successful", Toast.LENGTH_SHORT);
                     } else {
                         Log.i(TAG, "login unsuccessful");
-                        msg = Toast.makeText(ctx, "NO :(", Toast.LENGTH_SHORT);
+                        msg = Toast.makeText(ctx, "Unable to Login", Toast.LENGTH_SHORT);
                     }
                     msg.show();
                 }
@@ -153,6 +160,21 @@ public class Connection {
                         Log.i(TAG, "Cookie: path: " + c.getPath() + " name: " + c.getName() + " value: " + c.getValue());
                     }
 
+                    // HTTP Post
+                    HttpClient httpclient = new DefaultHttpClient();
+                    HttpPost httppost = new HttpPost(currentHost.toURI()+"/login");
+                    
+                    // Insert Userdata into form
+                    List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+                    nvps.add(new BasicNameValuePair("username", login));
+                    nvps.add(new BasicNameValuePair("password", password));
+                    nvps.add(new BasicNameValuePair("lt", "LT-1289482352r9FD79111ED033B90DF"));
+                    nvps.add(new BasicNameValuePair("service", "http://www.oldweather.org/classify"));
+                    httppost.setEntity(new UrlEncodedFormEntity(nvps));
+                    
+                    // Execute Http Post request
+                   	HttpResponse post_response = httpclient.execute(httppost);
+                   	Log.i(TAG, "Http response: " + post_response.toString());
                 }
             } catch (ClientProtocolException e) {
                 Log.e(TAG, "login: ClientProtocolException: " + e.getMessage());

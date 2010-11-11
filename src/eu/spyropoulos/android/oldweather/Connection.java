@@ -40,7 +40,7 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 
 public class Connection {
-    private static final String LOGIN_URL = "http://www.oldweather.org/classify";
+    private static final String LOGIN_URL = "http://www.oldweather.org/classify?vessel_id=4caf8377cadfd34197000005";
 
     private DefaultHttpClient mHttpClient;
 
@@ -133,21 +133,24 @@ public class Connection {
                 HttpEntity resp_entity = response.getEntity();
 
                 if (resp_entity != null) {
-                    String login_page_html = EntityUtils.toString(resp_entity);
-                    Log.i(TAG, login_page_html);
-                    // Locate and extract the contents of the form tag
-                    Pattern formPattern = Pattern.compile("<form action=\"([^\"])+\" method=\"post\" [^>]*id=\"login-form\">(.*?)</form>");
-                    Matcher m = formPattern.matcher(login_page_html);
-                    if (m.find() && m.groupCount() == 2) {
-                        String submit_suffix = m.group(1); // This is the suffix to the redirected URL where the form is submitted
-                        String form_contents = m.group(2); // This contains the form inputs and needs further parsing
-                        Log.i(TAG, form_contents);
-                    }
                     // Find the redirected URL, as this is where the form is submitted (with the suffix added)
                     HttpHost currentHost = (HttpHost) context.getAttribute(ExecutionContext.HTTP_TARGET_HOST);
                     Log.i(TAG, "host: " + currentHost.toURI());
                     HttpUriRequest currentReq = (HttpUriRequest) context.getAttribute(ExecutionContext.HTTP_REQUEST);
                     Log.i(TAG, "uri: " + currentReq.getURI());
+
+                    String login_page_html = EntityUtils.toString(resp_entity);
+                    Log.i(TAG, login_page_html);
+                    // Locate and extract the contents of the form tag
+                    Pattern formPattern = Pattern.compile("<form action=\"([^\"]+)\" method=\"post\" [^>]*id=\"login-form\">(.*?)</form>");
+                    Matcher m = formPattern.matcher(login_page_html);
+					String login_url = currentHost.toURI();
+					String form_contents = null;
+                    if (m.find() && m.groupCount() == 2) {
+                        login_url += m.group(1); // This is the suffix to the redirected URL where the form is submitted
+                        form_contents = m.group(2); // This contains the form inputs and needs further parsing
+                        Log.i(TAG, form_contents);
+                    }
 
                     // Examine header
                     for (Header h : response.getAllHeaders()) {
@@ -160,21 +163,43 @@ public class Connection {
                         Log.i(TAG, "Cookie: path: " + c.getPath() + " name: " + c.getName() + " value: " + c.getValue());
                     }
 
+					// Extract lt value and service name
+					String lt_code = null;
+					String service = null;
+					Pattern ltPattern = Pattern.compile("<input type=\"hidden\" name=\"lt\" value=\"([^\"]*)\" id=\"lt\"/>");
+					m = ltPattern.matcher(form_contents);
+					if (m.find() && m.groupCount() == 1) {
+						lt_code = m.group(1);
+					}
+					Pattern servicePattern = Pattern.compile(
+							"<input type=\"hidden\" name=\"service\" value=\"([^\"]*)\" id=\"service\"/>");
+					m = servicePattern.matcher(form_contents);
+					if (m.find() && m.groupCount() == 1) {
+						service = m.group(1);
+					}
+
                     // HTTP Post
                     HttpClient httpclient = new DefaultHttpClient();
-                    HttpPost httppost = new HttpPost(currentHost.toURI()+"/login");
+                    HttpPost httppost = new HttpPost(login_url);
                     
                     // Insert Userdata into form
                     List<NameValuePair> nvps = new ArrayList<NameValuePair>();
                     nvps.add(new BasicNameValuePair("username", login));
                     nvps.add(new BasicNameValuePair("password", password));
-                    nvps.add(new BasicNameValuePair("lt", "LT-1289482352r9FD79111ED033B90DF"));
-                    nvps.add(new BasicNameValuePair("service", "http://www.oldweather.org/classify"));
+                    nvps.add(new BasicNameValuePair("lt", lt_code));
+                    nvps.add(new BasicNameValuePair("service", service));
                     httppost.setEntity(new UrlEncodedFormEntity(nvps));
                     
                     // Execute Http Post request
                    	HttpResponse post_response = httpclient.execute(httppost);
-                   	Log.i(TAG, "Http response: " + post_response.toString());
+                   	Log.i(TAG, "Login response: " + EntityUtils.toString(post_response.getEntity()));
+
+                    // Examine cookies
+                    cs = mHttpClient.getCookieStore();
+                    for (Cookie c : cs.getCookies()) {
+                        Log.i(TAG, "Cookie: path: " + c.getPath() + " name: " + c.getName() + " value: " + c.getValue());
+                    }
+
                 }
             } catch (ClientProtocolException e) {
                 Log.e(TAG, "login: ClientProtocolException: " + e.getMessage());

@@ -5,6 +5,9 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 public class OldWeatherApp extends Activity {
@@ -13,7 +16,9 @@ public class OldWeatherApp extends Activity {
     private Connection conn;
     private DbAdapter mDb;
 
-    /** Called when the activity is first created. */
+    /**
+     * Called when the activity is first created.
+     */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -30,7 +35,6 @@ public class OldWeatherApp extends Activity {
             resetSharedPreferences(prefs);
         }
 
-        Toast netStatusMessage = null;
         /*
         mDb.createUser("iniju", null);
 
@@ -43,9 +47,39 @@ public class OldWeatherApp extends Activity {
         }
         netStatusMessage.show();
 */
+        final Button button = (Button) findViewById(R.id.ok);
+        button.setOnClickListener(
+                new View.OnClickListener() {
+                    public void onClick(View v) {
+                        EditText usernameEditbox = (EditText) findViewById(R.id.username_box);
+                        EditText passwordEditbox = (EditText) findViewById(R.id.passwd_box);
 
+
+                        mDb.createUser(usernameEditbox.getText().toString(), passwordEditbox.getText().toString());
+                        Cursor cur = mDb.fetchUser("inglor");
+                        Toast netStatusMessage = null;
+
+                        String pwd = cur.getString(1);
+                        if (pwd == null) {
+                            netStatusMessage = Toast.makeText(OldWeatherApp.this, "String was null", Toast.LENGTH_SHORT);
+                        } else {
+                            netStatusMessage = Toast.makeText(OldWeatherApp.this, "String was " + pwd, Toast.LENGTH_SHORT);
+                        }
+                        netStatusMessage.show();
+                        conn.login("inglor", "artanis", getBaseContext());
+                    }
+                }
+        );
+
+
+        Toast conn_check = null;
         if (Connection.isOnline(getBaseContext())) {
-            conn.login("iniju", "aaa", getBaseContext());
+            conn_check = Toast.makeText(getBaseContext(), "Provide username and password", Toast.LENGTH_SHORT);
+            conn_check.show();
+
+        } else {
+            conn_check = Toast.makeText(getBaseContext(), "Connection unavailble", Toast.LENGTH_SHORT);
+            conn_check.show();
         }
     }
 
